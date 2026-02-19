@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Loader2, ThumbsUp, ThumbsDown, Minus, ArrowLeft, ExternalLink, Play, Star, ShoppingBag, Beaker, Info } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Minus, ArrowLeft, ExternalLink, Play, Star, ShoppingBag, Beaker, Info, X } from 'lucide-react';
 import Link from 'next/link';
 
 const API_BASE = '/api';
@@ -127,16 +127,20 @@ function ProductDetailContent() {
 
             <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                 {/* 商品メインセクション */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-16">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
                     {/* 左: 商品画像 */}
                     <div className="flex items-start justify-center">
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 w-full aspect-square flex items-center justify-center border border-gray-100 shadow-sm lg:sticky lg:top-24">
+                        <div className="bg-white rounded-3xl p-8 w-full aspect-square flex items-center justify-center border border-rose-100 shadow-sm lg:sticky lg:top-24 relative overflow-hidden">
+                            {/* 背景装飾 */}
+                            <div className="absolute top-0 left-0 w-32 h-32 bg-rose-50 rounded-full blur-3xl opacity-50 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+                            <div className="absolute bottom-0 right-0 w-40 h-40 bg-lime-50 rounded-full blur-3xl opacity-50 translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
+
                             {product.image_url && product.image_url !== '' ? (
-                                <img src={product.image_url} alt={product.name} className="max-w-full max-h-full object-contain" />
+                                <img src={product.image_url} alt={product.name} className="max-w-full max-h-full object-contain relative z-10" />
                             ) : product.thumbnail_url ? (
-                                <img src={product.thumbnail_url} alt={product.name} className="max-w-full max-h-full object-cover rounded-2xl" />
+                                <img src={product.thumbnail_url} alt={product.name} className="max-w-full max-h-full object-cover rounded-2xl relative z-10" />
                             ) : (
-                                <span className="text-gray-200 text-sm tracking-widest">NO IMAGE</span>
+                                <span className="text-gray-200 text-sm tracking-widest relative z-10">NO IMAGE</span>
                             )}
                         </div>
                     </div>
@@ -144,121 +148,106 @@ function ProductDetailContent() {
                     {/* 右: 商品情報 */}
                     <div className="space-y-8">
                         {/* 基本情報 */}
-                        <div className="space-y-3">
-                            {product.brand && (
-                                <p className="text-sm text-violet-500 font-medium">{product.brand}</p>
-                            )}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                {product.brand && (
+                                    <span className="text-sm font-bold text-rose-500 bg-rose-50 px-3 py-1 rounded-full">{product.brand}</span>
+                                )}
+                                <div className="flex gap-2">
+                                    {product.category && <span className="text-xs text-gray-400 border border-gray-100 px-2 py-1 rounded">{product.category}</span>}
+                                </div>
+                            </div>
+
                             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
                                 {product.name}
                             </h1>
-                            <div className="flex items-center gap-3 flex-wrap">
-                                {product.category && (
-                                    <span className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{product.category}</span>
-                                )}
-                                {product.volume && (
-                                    <span className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{product.volume}</span>
-                                )}
+                        </div>
+
+                        {/* 評価対比 */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* YouTube Heat */}
+                            <div className="bg-white border border-rose-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full opacity-50 pointer-events-none"></div>
+                                <p className="text-[10px] font-bold text-rose-400 mb-1 flex items-center gap-1 uppercase tracking-wider">
+                                    <Play className="w-3 h-3 fill-rose-400" /> YouTube Heat
+                                </p>
+                                <div className="flex items-end gap-2">
+                                    <span className="text-2xl font-bold text-gray-800">{product.review_count}</span>
+                                    <span className="text-xs text-gray-400 mb-1">Reviews</span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">動画での話題性・熱量</p>
+                            </div>
+
+                            {/* @cosme Cool */}
+                            <div className="bg-white border border-lime-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-lime-50 rounded-bl-full opacity-50 pointer-events-none"></div>
+                                <p className="text-[10px] font-bold text-lime-600 mb-1 flex items-center gap-1 uppercase tracking-wider">
+                                    <Star className="w-3 h-3 fill-lime-500 text-lime-500" /> @cosme Spec
+                                </p>
+                                <div className="flex items-end gap-2">
+                                    <span className="text-2xl font-bold text-gray-800">{product.positive_rate}%</span>
+                                    <span className="text-xs text-gray-400 mb-1">Positive</span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">冷静なスペック評価</p>
                             </div>
                         </div>
 
-                        {/* 価格 */}
-                        {product.price && (
-                            <div className="flex items-baseline gap-2">
-                                <p className="text-3xl font-bold text-gray-900">{product.price}</p>
-                            </div>
-                        )}
-
-                        {/* 評価 */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="stat-card p-4 text-center">
-                                <p className="text-[10px] text-gray-400 mb-1">YouTubeレビュー</p>
-                                <p className="text-2xl font-bold text-gray-800">{product.review_count}</p>
-                            </div>
-                            <div className={`stat-card p-4 text-center ${product.positive_rate >= 70 ? 'bg-emerald-50 border-emerald-100' : ''}`}>
-                                <p className="text-[10px] text-gray-400 mb-1">好評率</p>
-                                <p className={`text-2xl font-bold ${product.positive_rate >= 70 ? 'text-emerald-500' : 'text-gray-800'}`}>
-                                    {product.positive_rate}%
-                                </p>
-                            </div>
-                            {product.cosme_rating && (
-                                <div className="stat-card p-4 text-center bg-orange-50 border-orange-100">
-                                    <p className="text-[10px] text-gray-400 mb-1 flex items-center justify-center gap-1">
-                                        <Star className="w-3 h-3 text-orange-400 fill-orange-400" /> @cosme
-                                    </p>
-                                    <p className="text-2xl font-bold text-orange-500">{product.cosme_rating}</p>
-                                </div>
+                        {/* 価格 & スペック */}
+                        <div className="flex items-baseline gap-4 border-b border-gray-100 pb-6">
+                            {product.price && (
+                                <p className="text-3xl font-bold text-gray-900">{product.price}<span className="text-sm font-normal text-gray-500 ml-1">（税込）</span></p>
+                            )}
+                            {product.volume && (
+                                <span className="text-sm text-gray-500">{product.volume}</span>
                             )}
                         </div>
 
-                        {/* 商品説明 */}
-                        {product.description && (
-                            <div className="space-y-2">
-                                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                                    <Info className="w-4 h-4 text-violet-400" /> 商品説明
-                                </h3>
-                                <p className="text-sm text-gray-500 leading-relaxed">{product.description}</p>
-                            </div>
-                        )}
-
-                        {/* 特徴 */}
-                        {featuresList.length > 0 && (
-                            <div className="space-y-2">
-                                <h3 className="text-sm font-semibold text-gray-700">特徴</h3>
-                                <ul className="space-y-1.5">
-                                    {featuresList.slice(0, 5).map((f, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-gray-500">
-                                            <span className="text-violet-400 mt-0.5 shrink-0">•</span>
-                                            <span className="leading-relaxed">{f}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {/* 使い方 */}
-                        {product.how_to_use && (
-                            <div className="space-y-2">
-                                <h3 className="text-sm font-semibold text-gray-700">使い方</h3>
-                                <p className="text-sm text-gray-500 leading-relaxed bg-violet-50/50 p-4 rounded-xl border border-violet-100/50">
-                                    {product.how_to_use}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* 外部リンク */}
-                        <div className="flex gap-3 pt-2">
+                        {/* アクションボタン (Conversion) */}
+                        <div className="space-y-3 pb-4">
+                            <p className="text-xs text-gray-400 text-center mb-1">＼ 30代の賢い選択 ／</p>
                             {product.amazon_url && (
                                 <a href={product.amazon_url} target="_blank" rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2.5 bg-[#FF9900]/10 text-[#c77a00] rounded-xl text-sm font-medium hover:bg-[#FF9900]/20 transition-colors border border-[#FF9900]/20">
-                                    <ShoppingBag className="w-4 h-4" /> Amazonで見る <ExternalLink className="w-3 h-3" />
+                                    className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-xl text-lg font-bold shadow-lg shadow-orange-100/50 hover:shadow-orange-200 hover:-translate-y-0.5 transition-all">
+                                    <ShoppingBag className="w-5 h-5" /> Amazonで今すぐ見る <ExternalLink className="w-4 h-4 opacity-70" />
                                 </a>
                             )}
-                            {product.cosme_url && (
-                                <a href={product.cosme_url} target="_blank" rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-500 rounded-xl text-sm font-medium hover:bg-rose-100 transition-colors border border-rose-100">
-                                    <Star className="w-4 h-4" /> @cosmeで見る <ExternalLink className="w-3 h-3" />
-                                </a>
-                            )}
+
+                            <div className="flex gap-3">
+                                {product.cosme_url && (
+                                    <a href={product.cosme_url} target="_blank" rel="noopener noreferrer"
+                                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                                        <Star className="w-4 h-4 text-lime-500" /> @cosmeで口コミ確認
+                                    </a>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Short Description */}
+                        {product.description && (
+                            <p className="text-sm text-gray-500 leading-relaxed bg-gray-50 p-4 rounded-lg">
+                                {product.description}
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 {/* タブナビゲーション */}
-                <div className="border-b border-gray-200 mb-8">
+                <div className="border-b border-gray-200 mb-8 sticky top-[72px] bg-[#fafafa]/95 backdrop-blur z-20 pt-2">
                     <div className="flex gap-8">
                         {[
-                            { key: 'overview', label: '概要' },
-                            { key: 'ingredients', label: '成分', show: !!product.ingredients },
-                            { key: 'reviews', label: `動画レビュー (${product.review_count})` },
+                            { key: 'reviews', label: '① 動画レビュー (YouTube Heat)', icon: Play },
+                            { key: 'ingredients', label: '② 成分・詳細 (Spec Check)', icon: Beaker, show: !!product.ingredients },
+                            { key: 'overview', label: '③ 概要', icon: Info },
                         ].filter(t => t.show !== false).map(tab => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                                className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
-                                    ? 'border-violet-500 text-violet-600'
+                                className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === tab.key
+                                    ? 'border-rose-500 text-rose-600'
                                     : 'border-transparent text-gray-400 hover:text-gray-600'
                                     }`}
                             >
+                                <tab.icon className={`w-4 h-4 ${activeTab === tab.key ? 'text-rose-500' : 'text-gray-400'}`} />
                                 {tab.label}
                             </button>
                         ))}
@@ -268,8 +257,8 @@ function ProductDetailContent() {
                 {/* 動画プレイヤー */}
                 {playingVideo && (
                     <div className="mb-10 animate-fade-in-up">
-                        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                            <div className="aspect-video">
+                        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-lg shadow-rose-100/50">
+                            <div className="aspect-video relative">
                                 <iframe
                                     src={`https://www.youtube.com/embed/${playingVideo.videoId}?start=${playingVideo.timestamp}&autoplay=1&rel=0`}
                                     title="YouTube video"
@@ -279,101 +268,119 @@ function ProductDetailContent() {
                                 ></iframe>
                             </div>
                         </div>
-                        <button onClick={() => setPlayingVideo(null)} className="mt-2 text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                            × プレイヤーを閉じる
+                        <button onClick={() => setPlayingVideo(null)} className="mt-2 text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1">
+                            <X className="w-4 h-4" /> プレイヤーを閉じる
                         </button>
                     </div>
                 )}
 
                 {/* タブコンテンツ */}
-                {activeTab === 'overview' && (
-                    <div className="space-y-8 animate-fade-in-up">
-                        {/* 特徴の詳細表示 */}
-                        {featuresList.length > 0 && (
-                            <div className="bg-white rounded-2xl border border-gray-100 p-8">
-                                <h2 className="text-lg font-bold text-gray-800 mb-4">商品の特徴</h2>
-                                <ul className="space-y-3">
-                                    {featuresList.map((f, i) => (
-                                        <li key={i} className="flex items-start gap-3 text-sm text-gray-600">
-                                            <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-500 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
-                                            <span className="leading-relaxed">{f}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
+                <div className="min-h-[400px]">
+                    {activeTab === 'overview' && (
+                        <div className="space-y-8 animate-fade-in-up">
+                            {/* 特徴の詳細表示 */}
+                            {featuresList.length > 0 && (
+                                <div className="bg-white rounded-2xl border border-rose-100 p-8 shadow-sm">
+                                    <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <div className="w-1 h-6 bg-rose-400 rounded-full"></div> 商品の特徴
+                                    </h2>
+                                    <ul className="space-y-4">
+                                        {featuresList.map((f, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-sm text-gray-600">
+                                                <span className="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                                                <span className="leading-relaxed">{f}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
 
-                        {/* 使い方の詳細 */}
-                        {product.how_to_use && (
-                            <div className="bg-white rounded-2xl border border-gray-100 p-8">
-                                <h2 className="text-lg font-bold text-gray-800 mb-4">使い方</h2>
-                                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{product.how_to_use}</p>
-                            </div>
-                        )}
-
-                        {/* 何もない場合はレビューへ誘導 */}
-                        {!featuresList.length && !product.how_to_use && (
-                            <div className="text-center py-12">
-                                <p className="text-gray-300 text-sm">概要情報はまだ登録されていません</p>
-                                <button onClick={() => setActiveTab('reviews')} className="mt-3 text-violet-500 text-sm hover:text-violet-600">
-                                    動画レビューを見る →
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {activeTab === 'ingredients' && product.ingredients && (
-                    <div className="animate-fade-in-up">
-                        <div className="bg-white rounded-2xl border border-gray-100 p-8">
-                            <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                                <Beaker className="w-5 h-5 text-violet-400" /> 全成分表示
-                            </h2>
-                            <p className="text-xs text-gray-400 mb-6">成分は配合量の多い順に記載されています</p>
-                            <p className="text-sm text-gray-600 leading-loose">{product.ingredients}</p>
+                            {/* 使い方の詳細 */}
+                            {product.how_to_use && (
+                                <div className="bg-white rounded-2xl border border-rose-100 p-8 shadow-sm">
+                                    <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <div className="w-1 h-6 bg-rose-400 rounded-full"></div> 使い方
+                                    </h2>
+                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line bg-rose-50/50 p-4 rounded-xl border border-rose-100/50">
+                                        {product.how_to_use}
+                                    </p>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {activeTab === 'reviews' && (
-                    <div className="space-y-4 animate-fade-in-up">
-                        {Object.values(groupedReviews).map((group) => (
-                            <div key={group.videoId} className="review-card p-6">
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div className="relative shrink-0 cursor-pointer group" onClick={() => setPlayingVideo({ videoId: group.videoId, timestamp: group.reviews[0].timestamp_seconds })}>
-                                        <img src={group.thumbnail} alt="" className="w-36 h-20 object-cover rounded-lg bg-gray-100" />
-                                        <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Play className="w-8 h-8 text-white fill-white" />
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 mb-0.5">{group.channel}</p>
-                                        <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug">{group.title}</p>
-                                        <a href={`https://www.youtube.com/watch?v=${group.videoId}`} target="_blank" rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-[10px] text-violet-400 hover:text-violet-600 mt-1.5 transition-colors">
-                                            YouTubeで見る <ExternalLink className="w-3 h-3" />
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    {group.reviews.map(review => (
-                                        <div key={review.id}
-                                            className="flex items-start gap-3 py-3 border-t border-gray-50 first:border-t-0 cursor-pointer hover:bg-gray-50/50 -mx-2 px-2 rounded-lg transition-colors"
-                                            onClick={() => setPlayingVideo({ videoId: review.video_id, timestamp: review.timestamp_seconds })}
-                                        >
-                                            <SentimentBadge sentiment={review.sentiment} />
-                                            <p className="text-sm text-gray-600 leading-relaxed flex-1">{review.summary}</p>
-                                            <span className="text-[10px] text-violet-400 bg-violet-50 px-2 py-0.5 rounded font-mono shrink-0 mt-0.5">
-                                                {formatTimestamp(review.timestamp_seconds)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+                    {activeTab === 'ingredients' && product.ingredients && (
+                        <div className="animate-fade-in-up">
+                            <div className="bg-white rounded-2xl border border-lime-100 p-8 shadow-sm">
+                                <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                                    <Beaker className="w-5 h-5 text-lime-500" /> 全成分表示 (Spec Check)
+                                </h2>
+                                <p className="text-xs text-gray-400 mb-6">成分表から、あなたの肌に合うか冷静にチェックしましょう。</p>
+                                <p className="text-sm text-gray-600 leading-loose font-mono text-justify break-all">
+                                    {product.ingredients}
+                                </p>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </div>
+                    )}
+
+                    {activeTab === 'reviews' && (
+                        <div className="space-y-6 animate-fade-in-up">
+                            <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg flex items-center gap-2">
+                                <Info className="w-4 h-4 text-rose-400" /> YouTuberたちが実際に使って感じた「熱量」のあるレビューです。
+                            </p>
+
+                            {Object.values(groupedReviews).map((group) => (
+                                <div key={group.videoId} className="review-card p-6 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all group-card">
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div className="relative shrink-0 cursor-pointer group" onClick={() => setPlayingVideo({ videoId: group.videoId, timestamp: group.reviews[0].timestamp_seconds })}>
+                                            <img src={group.thumbnail} alt="" className="w-40 h-24 object-cover rounded-lg bg-gray-100 shadow-sm group-hover:shadow-md transition-all" />
+                                            <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
+                                                <Play className="w-10 h-10 text-white fill-white drop-shadow-md" />
+                                            </div>
+                                            <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                                Play
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0 pt-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-[10px] font-bold text-white bg-rose-500 px-2 py-0.5 rounded-full">YouTube</span>
+                                                <p className="text-xs font-bold text-gray-500">{group.channel}</p>
+                                            </div>
+                                            <p className="text-base font-bold text-gray-800 line-clamp-2 leading-snug mb-2 group-hover:text-rose-600 transition-colors">
+                                                {group.title}
+                                            </p>
+                                            <a href={`https://www.youtube.com/watch?v=${group.videoId}`} target="_blank" rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-500 transition-colors">
+                                                YouTube元動画を開く <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 bg-gray-50/50 rounded-xl p-4">
+                                        {group.reviews.map(review => (
+                                            <div key={review.id}
+                                                className="flex items-start gap-3 cursor-pointer hover:bg-white p-2 rounded-lg transition-all"
+                                                onClick={() => setPlayingVideo({ videoId: review.video_id, timestamp: review.timestamp_seconds })}
+                                            >
+                                                <SentimentBadge sentiment={review.sentiment} />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                                                        <span className="text-rose-400 font-bold mr-1">"</span>
+                                                        {review.summary}
+                                                        <span className="text-rose-400 font-bold ml-1">"</span>
+                                                    </p>
+                                                </div>
+                                                <span className="text-[10px] text-rose-500 font-mono bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 shrink-0 mt-0.5">
+                                                    {formatTimestamp(review.timestamp_seconds)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </main>
         </div>
     );

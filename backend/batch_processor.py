@@ -156,16 +156,23 @@ def run_batch(query: str = "コスメ レビュー", max_videos: int = 5):
     logger.info("Batch process completed.")
 
 @app.command()
-def process_urls(urls: List[str]):
+def process_urls(
+    urls: List[str],
+    api_key: str = typer.Option(None, help="Gemini APIキー (オーバーライド用)"),
+    main_only: bool = typer.Option(False, help="商品抽出(メイン処理)のみ実行し、エンリッチ処理をスキップする")
+):
     """
     Process specific YouTube videos by URL.
-    Example: python batch_processor.py process-urls https://www.youtube.com/watch?v=... https://youtu.be/...
+    Example: python batch_processor.py process-urls https://www.youtube.com/watch?v=... --api-key AIza... --main-only
     """
     from urllib.parse import urlparse, parse_qs
 
     db = SessionLocal()
     youtube_service = YouTubeService()
-    gemini_service = GeminiService()
+    
+    # APIキーが指定された場合はそれを使用、なければ環境変数からロード
+    keys = [api_key] if api_key else None
+    gemini_service = GeminiService(api_keys=keys)
 
     for url in urls:
         # Extract Video ID
@@ -191,12 +198,19 @@ def process_urls(urls: List[str]):
             continue
         
         snippet = video_details['snippet']
-        process_video_item(db, youtube_service, gemini_service, video_id, snippet)
+        process_video_item(
+            db, 
+            youtube_service, 
+            gemini_service, 
+            video_id, 
+            snippet, 
+            skip_enrich=main_only
+        )
 
     db.close()
     logger.info("Custom video process completed.")
 
-def process_video_item(db: Session, youtube_service: YouTubeService, gemini_service: GeminiService, video_id: str, snippet: dict, enrich_gemini_service: GeminiService = None):
+def process_video_item(db: Session, youtube_service: YouTubeService, gemini_service: GeminiService, video_id: str, snippet: dict, enrich_gemini_service: GeminiService = None, skip_enrich: bool = False):
     title = snippet['title']
     channel_name = snippet['channelTitle']
     description = snippet.get('description', '')  # 概要欄テキストを取得
@@ -284,10 +298,13 @@ def process_video_item(db: Session, youtube_service: YouTubeService, gemini_serv
             db.refresh(product)
             logger.info(f"新規商品登録: '{official_info['name']}' (ID: {product.id[:8]}...)")
             
-            # 新規商品の詳細情報をGemini AIで生成（エンリッチ用キーがあればそちらを使用）
-            enrich_svc = enrich_gemini_service or gemini_service
-            enrich_new_product(product, enrich_svc, db)
-            time.sleep(1)  # API レート制限対策
+            # 新規商品の詳細情報をGemini AIで生成
+            if not skip_enrich:
+                enrich_svc = enrich_gemini_service or gemini_service
+                enrich_new_product(product, enrich_svc, db)
+                time.sleep(1)  # API レート制限対策
+            else:
+                logger.info(f"  メイン処理のみ実行のためエンリッチ処理をスキップします")
         # Save Review
         review = Review(
             product_id=product.id,
@@ -299,7 +316,8 @@ def process_video_item(db: Session, youtube_service: YouTubeService, gemini_serv
         db.add(review)
     
     db.commit()
-    logger.info(f"Saved results for video {video_id}")
+    count = db.query(Video).count()
+    logger.info(f"Saved results for video {video_id}. Total videos in DB: {count}")
 
 
 def enrich_new_product(product: Product, gemini_service: GeminiService, db):

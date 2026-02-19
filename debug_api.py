@@ -1,6 +1,6 @@
 import requests
 try:
-    response = requests.get("http://127.0.0.1:8000/products")
+    response = requests.get("http://127.0.0.1:8001/products")
     print(f"Status Code: {response.status_code}")
     print("Response Body:")
     print(response.text)

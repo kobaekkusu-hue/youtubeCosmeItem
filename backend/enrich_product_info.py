@@ -26,15 +26,28 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 # Gemini設定
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash")
+API_KEYS = [os.getenv(f"GEMINI_API_KEY_{i}") for i in range(1, 11) if os.getenv(f"GEMINI_API_KEY_{i}")]
+if os.getenv("GEMINI_API_KEY"):
+    API_KEYS.insert(0, os.getenv("GEMINI_API_KEY"))
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel(GEMINI_MODEL)
-else:
-    logger.error("GEMINI_API_KEY が未設定です。.env ファイルを確認してください。")
-    sys.exit(1)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash")
+
+current_key_index = 5
+
+def get_next_model():
+    global current_key_index
+    if not API_KEYS:
+        logger.error("APIキーが設定されていません。")
+        sys.exit(1)
+    
+    key = API_KEYS[current_key_index]
+    logger.info(f"  [API Key Switch] Using key index {current_key_index}")
+    genai.configure(api_key=key)
+    current_key_index = (current_key_index + 1) % len(API_KEYS)
+    return genai.GenerativeModel(GEMINI_MODEL)
+
+# 初回初期化
+model = get_next_model()
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -65,6 +78,11 @@ def fetch_amazon_url_and_price(product_name: str, brand: str = None) -> dict:
         price_el = first.select_one('.a-price .a-offscreen')
         if price_el:
             info['price'] = price_el.get_text(strip=True)
+            
+        # 商品画像の取得
+        img_el = first.select_one('img.s-image')
+        if img_el:
+            info['image_url'] = img_el.get('src')
         
     except Exception as e:
         logger.warning(f"    Amazon検索エラー: {e}")
@@ -96,6 +114,7 @@ def fetch_cosme_url(product_name: str, brand: str = None) -> dict:
 
 def generate_product_details(product_name: str, brand: str = None, category: str = None) -> dict:
     """Gemini AIを使って商品の詳細情報を生成する"""
+    global model
     info = {}
     
     prompt = f"""あなたはコスメの専門家です。以下のコスメ商品について、正確な情報を提供してください。
@@ -122,35 +141,43 @@ def generate_product_details(product_name: str, brand: str = None, category: str
 - 日本語で回答すること
 - JSON以外の文字を含めないこと"""
 
-    try:
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        
-        # JSON部分を抽出
-        if '```json' in text:
-            text = text.split('```json')[1].split('```')[0].strip()
-        elif '```' in text:
-            text = text.split('```')[1].split('```')[0].strip()
-        
-        data = json.loads(text)
-        
-        if data.get('description'):
-            info['description'] = data['description']
-        if data.get('features') and isinstance(data['features'], list):
-            info['features'] = json.dumps(data['features'], ensure_ascii=False)
-        if data.get('ingredients'):
-            info['ingredients'] = data['ingredients']
-        if data.get('volume'):
-            info['volume'] = data['volume']
-        if data.get('how_to_use'):
-            info['how_to_use'] = data['how_to_use']
-        if data.get('price'):
-            info['price'] = data['price']
-        
-    except json.JSONDecodeError as e:
-        logger.warning(f"    JSON解析エラー: {e}")
-    except Exception as e:
-        logger.warning(f"    Gemini生成エラー: {e}")
+    for attempt in range(len(API_KEYS) + 1):
+        try:
+            response = model.generate_content(prompt)
+            text = response.text.strip()
+            
+            # JSON部分を抽出
+            if '```json' in text:
+                text = text.split('```json')[1].split('```')[0].strip()
+            elif '```' in text:
+                text = text.split('```')[1].split('```')[0].strip()
+            
+            data = json.loads(text)
+            
+            if data.get('description'):
+                info['description'] = data['description']
+            if data.get('features') and isinstance(data['features'], list):
+                info['features'] = json.dumps(data['features'], ensure_ascii=False)
+            if data.get('ingredients'):
+                info['ingredients'] = data['ingredients']
+            if data.get('volume'):
+                info['volume'] = data['volume']
+            if data.get('how_to_use'):
+                info['how_to_use'] = data['how_to_use']
+            if data.get('price'):
+                info['price'] = data['price']
+            
+            return info # 成功
+
+        except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower():
+                logger.warning(f"    レート制限に達しました。キーを切り替えます... ({attempt+1}回目)")
+                model = get_next_model()
+                time.sleep(2)
+                continue
+            else:
+                logger.warning(f"    Gemini生成エラー: {e}")
+                break
     
     return info
 
@@ -201,9 +228,13 @@ def main():
     for i, product in enumerate(products, 1):
         logger.info(f"[{i}/{len(products)}] {product.name} ({product.brand})")
         
-        # 既に情報が充実している場合はスキップ
-        if product.description and product.features and product.amazon_url:
-            logger.info(f"  → スキップ（詳細情報は既に充実）")
+        # スキップ判定の強化: 
+        # 成分(ingredients)または使い方(how_to_use)が空、もしくは説明(description)が短すぎる場合は補完対象とする
+        is_missing_details = not (product.ingredients and product.how_to_use)
+        is_short_description = len(product.description or "") < 50
+        
+        if not is_missing_details and not is_short_description and product.amazon_url and product.image_url:
+            logger.info(f"  → スキップ（詳細は既に充実、画像あり）")
             continue
         
         fields_updated = enrich_product(product, db)
@@ -214,7 +245,7 @@ def main():
         else:
             logger.info(f"  → {fields_updated}項目更新")
         
-        time.sleep(2)  # Gemini APIレート制限対策
+        time.sleep(5)  # Gemini APIレート制限（Free Tier: 20req/min等）を確実に回避するため長めに待機
     
     db.close()
     logger.info(f"\n=== 完了: {total_updated}フィールドを更新 ===")

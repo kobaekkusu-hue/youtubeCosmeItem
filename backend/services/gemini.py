@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Optional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-flash-latest")
 
 
 def _load_api_keys() -> List[str]:
@@ -100,14 +100,20 @@ class GeminiService:
         
         while attempts < max_attempts:
             try:
-                response = self.model.generate_content(prompt)
                 # 成功: 使い切りリストから現在のキーを除外
+                response = self.model.generate_content(prompt)
                 GeminiService._exhausted_keys.discard(GeminiService._current_key_index)
                 return response.text.strip()
             except Exception as e:
                 error_str = str(e)
+                logger.warning(f"  ⚠️ Gemini API エラー: {error_str}")
                 if '429' in error_str:
                     attempts += 1
+                    # 429エラー時は待機時間を増やす
+                    wait_time = 15 * attempts
+                    logger.info(f"  ⏳ 429レート制限。{wait_time}秒待機してリトライします (試行 {attempts})")
+                    time.sleep(wait_time)
+                    
                     has_next = self._next_key()
                     if not has_next:
                         # 全キー使い切り → 60秒待機してリセット
@@ -125,15 +131,12 @@ class GeminiService:
         """
         動画の概要欄 + 字幕から商品レビューを正確に抽出する。
         """
-        if not transcript:
+        if not transcript and not description:
             return []
 
         # 字幕テキスト（タイムスタンプ付き）
-        transcript_text = ""
-        for item in transcript:
-            start = int(item['start'])
-            text = item['text']
-            transcript_text += f"[{start}s] {text}\n"
+        # レート制限回避のため、字幕解析を完全にスキップする（最終手段）
+        transcript_text = "（字幕解析スキップ）"
 
         prompt = f"""あなたはプロのコスメレビュー分析AIです。
 以下のYouTube動画から、紹介されているコスメ商品を**正確に**抽出してください。

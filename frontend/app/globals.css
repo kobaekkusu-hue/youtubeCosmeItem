@@ -10,15 +10,20 @@
   --foreground: #1a1a2e;
   --card: #ffffff;
   --card-foreground: #1a1a2e;
-  --primary: #7c3aed;
+  --primary: #be185d;
+  /* Rose-700 */
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #374151;
+  --secondary: #fdf2f8;
+  /* Pink-50 */
+  --secondary-foreground: #831843;
+  /* Pink-900 */
   --muted: #f3f4f6;
   --muted-foreground: #6b7280;
-  --accent: #ede9fe;
-  --accent-foreground: #7c3aed;
-  --border: #e5e7eb;
+  --accent: #ffe4e6;
+  /* Rose-100 */
+  --accent-foreground: #be185d;
+  --border: #fecdd3;
+  /* Rose-200 */
   --radius: 0.75rem;
 }
 
@@ -49,9 +54,9 @@ body {
   font-size: 14px;
 }
 
-/* ===== グラデーションテキスト ===== */
+/* ===== グラデーションテキスト (Adult Cute) ===== */
 .gradient-text {
-  background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #6366f1 100%);
+  background: linear-gradient(135deg, #be185d 0%, #db2777 50%, #e11d48 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -64,9 +69,9 @@ body {
   gap: 6px;
   font-size: 12px;
   font-weight: 700;
-  color: #374151;
+  color: #831843;
   padding: 8px 0;
-  border-bottom: 2px solid #7c3aed;
+  border-bottom: 2px solid #be185d;
   margin-bottom: 4px;
   letter-spacing: 0.02em;
 }
@@ -86,41 +91,44 @@ body {
 }
 
 .sidebar-item:hover {
-  background: #f3f0ff;
-  color: #6d28d9;
+  background: #fdf2f8;
+  color: #be185d;
 }
 
 .sidebar-item.active {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #fce7f3;
+  color: #be185d;
   font-weight: 600;
 }
 
-/* ===== 商品リストカード（@cosme風横型） ===== */
+/* ===== 商品リストカード（@cosme風横型・画像強調） ===== */
 .product-list-card {
   display: flex;
   align-items: stretch;
   background: #ffffff;
-  border: 1px solid #ebebeb;
+  border: 1px solid #fecdd3;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s ease;
 }
 
 .product-list-card:hover {
-  border-color: #c4b5fd;
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+  border-color: #be185d;
+  box-shadow: 0 4px 16px rgba(190, 24, 93, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+  transform: translateY(-1px);
 }
 
 .product-list-image {
-  width: 140px;
-  height: 140px;
-  min-width: 140px;
-  background: #fafafa;
+  width: 160px;
+  /* 少し大きく */
+  height: 160px;
+  min-width: 160px;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative;
 }
 
 @media (max-width: 640px) {
@@ -130,12 +138,12 @@ body {
 
   .product-list-image {
     width: 100%;
-    height: 180px;
+    height: 200px;
     min-width: unset;
   }
 
   .product-list-image img {
-    height: 140px;
+    height: 180px;
     width: auto;
   }
 }

@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Wデーション",
+    "brand": "kiss",
+    "category": "ファンデーション",
+    "features": "SPF25 PA++, 02 ナチュラルベージュ, 美容液成分85%配合, カバー力とナチュラルさの両立, 崩れにくい",
+    "timestamp_seconds": 20
+  },
+  {
+    "name": "スリムシャープアイライナー",
+    "brand": "mude.",
+    "category": "アイライナー",
+    "features": "SLIM SHARP EYELINER, 02 ブラウン, 描きやすい極細芯, 高発色, 落ちにくい",
+    "timestamp_seconds": 116
+  },
+  {
+    "name": "クリームチーク パールタイプ",
+    "brand": "CANMAKE",
+    "category": "チーク",
+    "features": "P01 ピーチダズル, ツヤ感, 自然な血色感, 塗布しやすい",
+    "timestamp_seconds": 194
+  },
+  {
+    "name": "THE アイパレ",
+    "brand": "BIDOL",
+    "category": "アイシャドウパレット",
+    "features": "08 ストロベリーラテ, 捨て色なし, デイリー使いしやすい, 発色が良い",
+    "timestamp_seconds": 279
+  },
+  {
+    "name": "W デューイアップアイパレット",
+    "brand": "Wonjungyo",
+    "category": "アイシャドウパレット",
+    "features": "02 トレンチブラウン, 捨て色なし, パール・ラメ・マットの組み合わせ, デイリー使いしやすい",
+    "timestamp_seconds": 379
+  }
+]
