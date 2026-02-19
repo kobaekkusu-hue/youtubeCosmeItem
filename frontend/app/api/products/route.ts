@@ -2,18 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const query = searchParams.get('q');
     const category = searchParams.get('category');
     const brand = searchParams.get('brand');
 
+    console.log(`DEBUG: Products API called with q=${query}, cat=${category}, brand=${brand}`);
+
     const supabase = getSupabaseServer();
 
+    // 順序制御に使う created_at を含め、全てのカラムを取得
     let dbQuery = supabase
         .from('products')
-        .select(`
-      id, name, brand, category, image_url, description, price, volume, cosme_rating, thumbnail_url
-    `);
+        .select('*');
 
     if (query) {
         dbQuery = dbQuery.or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`);
@@ -31,6 +32,8 @@ export async function GET(request: NextRequest) {
         console.error('Supabase Error (products):', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    console.log(`DEBUG: Products found: ${data?.length || 0}`);
 
     // レビュー数を取得
     const { data: allReviews, error: reviewError } = await supabase.from('reviews').select('product_id');
