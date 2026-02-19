@@ -38,12 +38,14 @@ function HomeContent() {
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedBrand, setSelectedBrand] = useState(searchParams.get('brand') || '');
+  const [selectedChannel, setSelectedChannel] = useState(searchParams.get('channel') || '');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
+  const [channels, setChannels] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // カテゴリとブランドを取得
+  // カテゴリ、ブランド、チャンネルを取得
   useEffect(() => {
     fetch(`${API_BASE}/categories`)
       .then(r => r.ok ? r.json() : [])
@@ -53,16 +55,21 @@ function HomeContent() {
       .then(r => r.ok ? r.json() : [])
       .then(data => Array.isArray(data) ? setBrands(data) : setBrands([]))
       .catch(() => setBrands([]));
+    fetch(`${API_BASE}/channels`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => Array.isArray(data) ? setChannels(data) : setChannels([]))
+      .catch(() => setChannels([]));
   }, []);
 
   // 商品検索
-  const fetchProducts = useCallback(async (q: string, cat: string, br: string) => {
+  const fetchProducts = useCallback(async (q: string, cat: string, br: string, ch: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (q) params.set('q', q);
       if (cat) params.set('category', cat);
       if (br) params.set('brand', br);
+      if (ch) params.set('channel', ch);
       const res = await fetch(`${API_BASE}/products?${params.toString()}`);
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -79,37 +86,39 @@ function HomeContent() {
   }, []);
 
   // URL更新
-  const updateURL = useCallback((q: string, cat: string, br: string) => {
+  const updateURL = useCallback((q: string, cat: string, br: string, ch: string) => {
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (cat) params.set('category', cat);
     if (br) params.set('brand', br);
+    if (ch) params.set('channel', ch);
     router.replace(`/?${params.toString()}`, { scroll: false });
   }, [router]);
 
   // 初期ロード & フィルター変更時
   useEffect(() => {
-    fetchProducts(query, selectedCategory, selectedBrand);
-    updateURL(query, selectedCategory, selectedBrand);
-  }, [selectedCategory, selectedBrand]);
+    fetchProducts(query, selectedCategory, selectedBrand, selectedChannel);
+    updateURL(query, selectedCategory, selectedBrand, selectedChannel);
+  }, [selectedCategory, selectedBrand, selectedChannel]);
 
   // 検索ハンドラ
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchProducts(query, selectedCategory, selectedBrand);
-    updateURL(query, selectedCategory, selectedBrand);
+    fetchProducts(query, selectedCategory, selectedBrand, selectedChannel);
+    updateURL(query, selectedCategory, selectedBrand, selectedChannel);
   };
 
   // フィルタークリア
   const clearFilters = () => {
     setSelectedCategory('');
     setSelectedBrand('');
+    setSelectedChannel('');
     setQuery('');
-    fetchProducts('', '', '');
-    updateURL('', '', '');
+    fetchProducts('', '', '', '');
+    updateURL('', '', '', '');
   };
 
-  const hasActiveFilters = query || selectedCategory || selectedBrand;
+  const hasActiveFilters = query || selectedCategory || selectedBrand || selectedChannel;
 
   // 検索パラメータを組み立て（詳細ページの戻るリンク用）
   const buildBackParams = () => {
@@ -117,6 +126,7 @@ function HomeContent() {
     if (query) p.set('q', query);
     if (selectedCategory) p.set('category', selectedCategory);
     if (selectedBrand) p.set('brand', selectedBrand);
+    if (selectedChannel) p.set('channel', selectedChannel);
     return p.toString();
   };
 
@@ -146,7 +156,7 @@ function HomeContent() {
                 {query && (
                   <button
                     type="button"
-                    onClick={() => { setQuery(''); fetchProducts('', selectedCategory, selectedBrand); updateURL('', selectedCategory, selectedBrand); }}
+                    onClick={() => { setQuery(''); fetchProducts('', selectedCategory, selectedBrand, selectedChannel); updateURL('', selectedCategory, selectedBrand, selectedChannel); }}
                     className="text-gray-300 hover:text-gray-500 mr-2 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -190,7 +200,13 @@ function HomeContent() {
                     {query && (
                       <span className="inline-flex items-center gap-1 bg-violet-50 text-violet-700 text-[11px] px-2 py-1 rounded-md border border-violet-200">
                         「{query}」
-                        <X className="w-3 h-3 cursor-pointer hover:text-violet-900" onClick={() => { setQuery(''); fetchProducts('', selectedCategory, selectedBrand); updateURL('', selectedCategory, selectedBrand); }} />
+                        <X className="w-3 h-3 cursor-pointer hover:text-violet-900" onClick={() => { setQuery(''); fetchProducts('', selectedCategory, selectedBrand, selectedChannel); updateURL('', selectedCategory, selectedBrand, selectedChannel); }} />
+                      </span>
+                    )}
+                    {selectedChannel && (
+                      <span className="inline-flex items-center gap-1 bg-violet-50 text-violet-700 text-[11px] px-2 py-1 rounded-md border border-violet-200">
+                        {selectedChannel}
+                        <X className="w-3 h-3 cursor-pointer hover:text-violet-900" onClick={() => setSelectedChannel('')} />
                       </span>
                     )}
                     {selectedCategory && (
@@ -208,6 +224,27 @@ function HomeContent() {
                   </div>
                 </div>
               )}
+
+              {/* チャンネルフィルター */}
+              <div>
+                <h3 className="sidebar-heading">
+                  <Star className="w-3.5 h-3.5" />
+                  YouTuberから探す
+                </h3>
+                <ul className="space-y-0.5">
+                  {channels.map(ch => (
+                    <li key={ch}>
+                      <button
+                        onClick={() => setSelectedChannel(selectedChannel === ch ? '' : ch)}
+                        className={`sidebar-item w-full text-left ${selectedChannel === ch ? 'active' : ''}`}
+                      >
+                        <ChevronRight className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{ch}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               {/* カテゴリフィルター */}
               <div>
@@ -269,6 +306,16 @@ function HomeContent() {
 
             {/* モバイル用フィルターバー */}
             <div className="lg:hidden mb-4 flex flex-wrap gap-2">
+              <select
+                value={selectedChannel}
+                onChange={(e) => setSelectedChannel(e.target.value)}
+                className="text-xs border border-gray-200 rounded-md px-3 py-2 bg-white text-gray-600"
+              >
+                <option value="">YouTuber</option>
+                {channels.map(ch => (
+                  <option key={ch} value={ch}>{ch}</option>
+                ))}
+              </select>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
