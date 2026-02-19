@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { Loader2, ThumbsUp, ThumbsDown, Minus, ArrowLeft, ExternalLink, Play, Star, ShoppingBag, Beaker, Info } from 'lucide-react';
 import Link from 'next/link';
 
-const API_BASE = 'http://192.168.0.11:8000';
+const API_BASE = '/api';
 
 interface Review {
     id: string;
