@@ -72,7 +72,15 @@ function ProductDetailContent() {
         (async () => {
             try {
                 const res = await fetch(`${API_BASE}/products/${id}`);
-                if (res.ok) setProduct(await res.json());
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && typeof data === 'object' && !data.error) {
+                        setProduct(data);
+                    } else {
+                        console.error('Invalid product data:', data);
+                        setProduct(null);
+                    }
+                }
             } catch (e) { console.error(e); }
             finally { setLoading(false); }
         })();

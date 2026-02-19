@@ -45,8 +45,14 @@ function HomeContent() {
 
   // カテゴリとブランドを取得
   useEffect(() => {
-    fetch(`${API_BASE}/categories`).then(r => r.json()).then(setCategories).catch(() => { });
-    fetch(`${API_BASE}/brands`).then(r => r.json()).then(setBrands).catch(() => { });
+    fetch(`${API_BASE}/categories`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => Array.isArray(data) ? setCategories(data) : setCategories([]))
+      .catch(() => setCategories([]));
+    fetch(`${API_BASE}/brands`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => Array.isArray(data) ? setBrands(data) : setBrands([]))
+      .catch(() => setBrands([]));
   }, []);
 
   // 商品検索
@@ -59,7 +65,12 @@ function HomeContent() {
       if (br) params.set('brand', br);
       const res = await fetch(`${API_BASE}/products?${params.toString()}`);
       const data = await res.json();
-      setProducts(data);
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        setProducts([]);
+        console.error('API Error:', data);
+      }
     } catch (e) {
       console.error('Fetch error:', e);
     } finally {
