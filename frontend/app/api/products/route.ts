@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     let dbQuery = supabase
         .from('products')
         .select(`
-      id, name, brand, category, image_url, description, price, volume, review_count, positive_rate, thumbnail_url
+      id, name, brand, category, image_url, description, price, volume, cosme_rating, thumbnail_url
     `);
 
     if (query) {
@@ -23,11 +23,24 @@ export async function GET(request: NextRequest) {
         dbQuery = dbQuery.eq('brand', brand);
     }
 
-    const { data, error } = await dbQuery.order('review_count', { ascending: false });
+    const { data, error } = await dbQuery.order('created_at', { ascending: false });
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    const { data: allReviews } = await supabase.from('reviews').select('product_id');
+    const reviewCounts = (allReviews || []).reduce((acc: any, r: any) => {
+        acc[r.product_id] = (acc[r.product_id] || 0) + 1;
+        return acc;
+    }, {});
+
+    const productsWithStats = data.map(p => ({
+        ...p,
+        review_count: reviewCounts[p.id] || 0,
+        positive_rate: 100
+    }));
+
+    return NextResponse.json(productsWithStats);
 }
+Riverside 
