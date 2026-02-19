@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Loader2, X, Star, ChevronRight, Package, Tag, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://192.168.0.11:8000';
 
 interface Product {
   id: string;
