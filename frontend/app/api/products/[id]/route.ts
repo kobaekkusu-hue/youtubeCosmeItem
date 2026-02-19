@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const id = params.id;
+    const { id } = await params;
 
     // 商品情報を取得
     const { data: product, error: productError } = await supabase
