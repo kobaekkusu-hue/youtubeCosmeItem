@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseServer } from '@/lib/supabase';
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
+    const supabase = getSupabaseServer();
 
     // 商品情報を取得
     const { data: product, error: productError } = await supabase
@@ -15,6 +16,7 @@ export async function GET(
         .single();
 
     if (productError) {
+        console.error('Supabase Error (product detail):', productError);
         return NextResponse.json({ error: productError.message }, { status: 500 });
     }
 
@@ -38,6 +40,7 @@ export async function GET(
         .order('timestamp_seconds', { ascending: true });
 
     if (reviewsError) {
+        console.error('Supabase Error (reviews detail):', reviewsError);
         return NextResponse.json({ error: reviewsError.message }, { status: 500 });
     }
 

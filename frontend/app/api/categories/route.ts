@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseServer } from '@/lib/supabase';
 
 export async function GET() {
+    const supabase = getSupabaseServer();
     const { data, error } = await supabase
         .from('products')
-        .select('category')
-        .not('category', 'is', null);
+        .select('category');
 
     if (error) {
+        console.error('Supabase Error (categories):', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // 重複を除去してソート
-    const categories = Array.from(new Set(data.map(item => item.category))).sort();
-
+    const categories = Array.from(new Set(data.map(p => p.category))).filter(Boolean);
     return NextResponse.json(categories);
 }
